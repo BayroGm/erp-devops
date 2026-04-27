@@ -18,6 +18,9 @@ phases:
   build:
     commands:
       - echo "Iniciando sesión en ECR..."
+      - echo "Obteniendo credenciales de ECR..."
+      - echo "$AWS_DEFAULT_REGION"
+      - echo "$REPO_URL"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPO_URL
       - echo "Construyendo imagen..."
       - |
