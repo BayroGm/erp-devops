@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Endpoint de Salud (Para que App Runner sepa que el ERP no ha tronado)
+// Endpoint de Salud (Para que App Runner sepa que el ERP no ha tronado)s
 app.get('/health', (req, res) => {
     res.status(200).json({ 
         status: 'UP', 
