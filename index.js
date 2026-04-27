@@ -3,14 +3,14 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 
-// 1. Un secreto de AWS (Snyk los detecta al instante por el patrón AKIA)
-const AWS_KEY = "AKIAIMNOOBRAGN7EXAMPLE"; 
+// // 1. Un secreto de AWS (Snyk los detecta al instante por el patrón AKIA)
+// const AWS_KEY = "AKIAIMNOOBRAGN7EXAMPLE"; 
 
-// 2. Una vulnerabilidad de código crítica (Inyección de comandos)
-app.get('/exec', (req, res) => {
-    const cmd = req.query.cmd;
-    eval(cmd); // <--- ESTO es el pecado capital de la programación
-});
+// // 2. Una vulnerabilidad de código crítica (Inyección de comandos)
+// app.get('/exec', (req, res) => {
+//     const cmd = req.query.cmd;
+//     eval(cmd); // <--- ESTO es el pecado capital de la programación
+// });
 
 // Endpoint de Salud (Para que App Runners sepa que el ERP no ha tronado)s
 app.get('/health', (req, res) => {
