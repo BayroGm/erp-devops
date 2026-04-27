@@ -18,13 +18,13 @@ phases:
       - echo "Trabajando en rama $BRANCH_NAME"
       # Prueba unitaria simple
       - if [ "$BRANCH_NAME" = "qa" ]; then npm test; fi
-  build:
+build:
     commands:
       - echo "Iniciando sesión en ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+      # Quitamos las llaves extras y usamos las variables limpias
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - echo "Construyendo imagen..."
       - if [ "$BRANCH_NAME" != "main" ]; then docker build -t $REPO_URL:$BRANCH_NAME-latest .; fi
-      - if [ "$BRANCH_NAME" = "main" ]; then docker pull $REPO_URL:qa-latest && docker tag $REPO_URL:qa-latest $REPO_URL:prod-latest; fi
   post_build:
     commands:
       - echo "Subiendo imagen a ECR..."
