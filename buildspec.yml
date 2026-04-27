@@ -9,7 +9,7 @@ phases:
       - npm install
   pre_build:
     commands:
-      - echo "Configurando variables..."
+      - echo "Configurando variables...."
       - REPO_NAME="erp-demo"
       - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}"
       - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///')
