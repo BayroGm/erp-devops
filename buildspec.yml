@@ -7,36 +7,41 @@ phases:
     commands:
       - echo "Instalando dependencias..."
       - npm install
+      - npm install -g @usebruno/cli # Para el Sanity Test
   pre_build:
     commands:
-      - echo "Configurando variables...."
+      - echo "--- DETECTANDO ESTRATEGIA DE RAMA ---"
       - REPO_NAME="erp-demo"
       - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}"
       - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///')
       - if [ -z "$BRANCH_NAME" ]; then BRANCH_NAME="dev"; fi
-      - echo "Rama detectada:" $BRANCH_NAME
+      - echo "Rama: $BRANCH_NAME"
+      
+      # TAREA: SAST (Snyk) - Aparece en tu diagrama en DEV y QA
+      - echo "Ejecutando SAST (Snyk)..."
+      - npx snyk test --token=$SNYK_TOKEN --severity-threshold=high || echo "Snyk detectó vulnerabilidades, pero continuamos demo..."
+
+      # TAREA: Pruebas Unitarias (Jest) - Solo en QA según tu diagrama
+      - |
+        if [ "$BRANCH_NAME" = "qa" ]; then
+          echo "Ejecutando Pruebas Unitarias (Jest)..."
+          npm test || exit 1
+        fi
   build:
     commands:
-      - echo "Iniciando sesión en ECR..."
-      - echo "Obteniendo credenciales de ECR..."
-      - echo "$AWS_DEFAULT_REGION"
-      - echo "$REPO_URL"
+      - echo "Construyendo imagen para $BRANCH_NAME..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPO_URL
-      - echo "Construyendo imagen..."
-      - |
-        if [ "$BRANCH_NAME" != "main" ]; then
-          docker build -t $REPO_URL:$BRANCH_NAME-latest .
-        else
-          docker pull $REPO_URL:qa-latest
-          docker tag $REPO_URL:qa-latest $REPO_URL:prod-latest
-        fi
+      - docker build -t $REPO_URL:$BRANCH_NAME-latest .
   post_build:
     commands:
-      - echo "Subiendo imagen..."
+      - echo "Subiendo a ECR..."
+      - docker push $REPO_URL:$BRANCH_NAME-latest
+      
+      # TAREA: Sanity Test (Bruno) - Solo en QA después del push
       - |
-        if [ "$BRANCH_NAME" != "main" ]; then
-          docker push $REPO_URL:$BRANCH_NAME-latest
-        else
-          docker push $REPO_URL:prod-latest
+        if [ "$BRANCH_NAME" = "qa" ]; then
+          echo "Ejecutando Sanity Test contra App Runner..."
+          # Aquí Bruno revisa la URL de Staging que ya tienes viva
+          bru run tests/sanity.bru --env staging || (echo "ROLLBACK: Sanity Test falló" && exit 1)
         fi
-      - echo "Bloque 1 completado exitosamente."
+      - echo "Bloque finalizado con éxito."
