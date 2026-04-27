@@ -3,7 +3,15 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 
-let TOKEN ="snyk_uat.1fcad39e.eyJlIjoxNzg1MDQ2NzY3LCJoIjoic255ay5pbyIsImoiOiJBWjNObC1hVjJPNkF3azJCSmJjU3hnIiwicyI6IlI0eDlwSTZvUWk2YnA4NFNjVzlaYXciLCJ0aWQiOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIn0.MKj52aA4CzZuTzwn_x8l8KtJHBWQH6bnc7cnDy6surE3dHLUbb46N9Y1FvuDO8tteS_oMJil3ZTh7yeAqWpnAA"
+// 1. Un secreto de AWS (Snyk los detecta al instante por el patrón AKIA)
+const AWS_KEY = "AKIAIMNOOBRAGN7EXAMPLE"; 
+
+// 2. Una vulnerabilidad de código crítica (Inyección de comandos)
+app.get('/exec', (req, res) => {
+    const cmd = req.query.cmd;
+    eval(cmd); // <--- ESTO es el pecado capital de la programación
+});
+
 // Endpoint de Salud (Para que App Runners sepa que el ERP no ha tronado)s
 app.get('/health', (req, res) => {
     res.status(200).json({ 
