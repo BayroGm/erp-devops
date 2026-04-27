@@ -11,35 +11,23 @@ phases:
     commands:
       - echo "Configurando variables..."
       - REPO_NAME="erp-demo"
+      # OJO: Aquí corregí la URL del repositorio
       - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}"
-      # Usamos un método más simple para detectar la rama
       - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///')
       - if [ -z "$BRANCH_NAME" ]; then BRANCH_NAME="dev"; fi
-      - echo "Rama detectada: $BRANCH_NAME"
-      - |
-        if [ "$BRANCH_NAME" = "qa" ]; then
-          echo "Ejecutando Jest..."
-          npm test
-        fi
+      - echo "Trabajando en rama $BRANCH_NAME"
+      # Prueba unitaria simple
+      - if [ "$BRANCH_NAME" = "qa" ]; then npm test; fi
   build:
     commands:
-      - echo "Login en ECR..."
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION.amazonaws.com}
-      - |
-        if [ "$BRANCH_NAME" != "main" ]; then
-          echo "Construyendo imagen dev..."
-          docker build -t $REPO_URL:$BRANCH_NAME-latest .
-        else
-          echo "Promoviendo imagen qa a prod..."
-          docker pull $REPO_URL:qa-latest
-          docker tag $REPO_URL:qa-latest $REPO_URL:prod-latest
-        fi
+      - echo "Iniciando sesión en ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
+      - echo "Construyendo imagen..."
+      - if [ "$BRANCH_NAME" != "main" ]; then docker build -t $REPO_URL:$BRANCH_NAME-latest .; fi
+      - if [ "$BRANCH_NAME" = "main" ]; then docker pull $REPO_URL:qa-latest && docker tag $REPO_URL:qa-latest $REPO_URL:prod-latest; fi
   post_build:
     commands:
-      - |
-        if [ "$BRANCH_NAME" != "main" ]; then
-          docker push $REPO_URL:$BRANCH_NAME-latest
-        else
-          docker push $REPO_URL:prod-latest
-        fi
-      - echo "Build completado con éxito."
+      - echo "Subiendo imagen a ECR..."
+      - if [ "$BRANCH_NAME" != "main" ]; then docker push $REPO_URL:$BRANCH_NAME-latest; fi
+      - if [ "$BRANCH_NAME" = "main" ]; then docker push $REPO_URL:prod-latest; fi
+      - echo "Bloque 1 Completado con éxito."
