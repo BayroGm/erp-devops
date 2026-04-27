@@ -18,7 +18,7 @@ phases:
       # Extraer el nombre de la rama (ej: refs/heads/dev -> dev)
       - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///')
       - [ -z "$BRANCH_NAME" ] && BRANCH_NAME="dev" 
-      - echo "Trabajando en rama: $BRANCH_NAME"
+      - echo "Trabajando en rama $BRANCH_NAME"
       
       - |
         if [ "$BRANCH_NAME" = "qa" ]; then
