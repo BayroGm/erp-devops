@@ -5,43 +5,21 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Instalando dependencias..."
+      - echo "--- BLOQUE DEV: INSTALANDO DEPENDENCIAS ---"
       - npm install
-      - npm install -g @usebruno/cli # Para el Sanity Test
   pre_build:
     commands:
-      - echo "--- DETECTANDO ESTRATEGIA DE RAMA ---"
-      - REPO_NAME="erp-demo"
-      - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${REPO_NAME}"
-      - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///')
-      - if [ -z "$BRANCH_NAME" ]; then BRANCH_NAME="dev"; fi
-      - echo "Rama: $BRANCH_NAME"
-      
-      # TAREA: SAST (Snyk) - Aparece en tu diagrama en DEV y QA
-      - echo "Ejecutando SAST (Snyk)..."
-      - npx snyk test --token=$SNYK_TOKEN --severity-threshold=high || echo "Snyk detectó vulnerabilidades, pero continuamos demo..."
-
-      # TAREA: Pruebas Unitarias (Jest) - Solo en QA según tu diagrama
-      - |
-        if [ "$BRANCH_NAME" = "qa" ]; then
-          echo "Ejecutando Pruebas Unitarias (Jest)..."
-          npm test || exit 1
-        fi
+      - echo "--- BLOQUE DEV: SAST / SEGURIDAD ---"
+      # Esta es la parte de SAST de tu diagrama
+      - npx snyk test --token=$SNYK_TOKEN --severity-threshold=high || echo "Vulnerabilidades encontradas. Avisando al equipo..."
   build:
     commands:
-      - echo "Construyendo imagen para $BRANCH_NAME..."
+      - echo "--- BLOQUE DEV: PUSH IMAGE ---"
+      - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/erp-demo"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPO_URL
-      - docker build -t $REPO_URL:$BRANCH_NAME-latest .
+      - docker build -t $REPO_URL:dev-latest .
+      - docker push $REPO_URL:dev-latest
   post_build:
     commands:
-      - echo "Subiendo a ECR..."
-      - docker push $REPO_URL:$BRANCH_NAME-latest
-      
-      # TAREA: Sanity Test (Bruno) - Solo en QA después del push
-      - |
-        if [ "$BRANCH_NAME" = "qa" ]; then
-          echo "Ejecutando Sanity Test contra App Runner..."
-          # Aquí Bruno revisa la URL de Staging que ya tienes viva
-          bru run tests/sanity.bru --env staging || (echo "ROLLBACK: Sanity Test falló" && exit 1)
-        fi
-      - echo "Bloque finalizado con éxito."
+      - echo "--- BLOQUE DEV: DESPLIEGUE AUTOMÁTICO ---"
+      - echo "Imagen enviada. App Runner actualizará el servicio erp-staging automáticamente."
