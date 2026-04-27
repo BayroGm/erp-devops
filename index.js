@@ -13,7 +13,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// El servicio que pediste: Datos simulados del ERP
+// El servicio que pediste: Datos simulados del ERPs
 app.get('/api/dashboard', (req, res) => {
     res.json({
         empresa: "Startup ERP Demo",
