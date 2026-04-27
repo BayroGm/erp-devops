@@ -5,21 +5,21 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "--- BLOQUE DEV: INSTALANDO DEPENDENCIAS ---"
+      - echo "--- BLOQUE DEV INSTALANDO DEPENDENCIAS ---"
       - npm install
   pre_build:
     commands:
-      - echo "--- BLOQUE DEV: SAST / SEGURIDAD ---"
+      - echo "--- BLOQUE DEV SAST / SEGURIDAD ---"
       # Esta es la parte de SAST de tu diagrama
       - npx snyk test --token=$SNYK_TOKEN --severity-threshold=high || echo "Vulnerabilidades encontradas. Avisando al equipo..."
   build:
     commands:
-      - echo "--- BLOQUE DEV: PUSH IMAGE ---"
+      - echo "--- BLOQUE DEV PUSH IMAGE ---"
       - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/erp-demo"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPO_URL
       - docker build -t $REPO_URL:dev-latest .
       - docker push $REPO_URL:dev-latest
   post_build:
     commands:
-      - echo "--- BLOQUE DEV: DESPLIEGUE AUTOMÁTICO ---"
+      - echo "--- BLOQUE DEV DESPLIEGUE AUTOMÁTICO ---"
       - echo "Imagen enviada. App Runner actualizará el servicio erp-staging automáticamente."
