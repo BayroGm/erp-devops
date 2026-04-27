@@ -5,37 +5,38 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Instalando dependencias para erp-devops..."
+      - echo "Instalando herramientas para erp-devops..."
       - npm install
       - npm install -g @usebruno/cli
 
   pre_build:
     commands:
-      - echo "Configurando variables de entorno..."
+      - echo "Configurando entorno..."
       - REPO_NAME="erp-demo"
       - REPO_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$REPO_NAME"
-      # Detectar rama desde el webhook de GitLab
-      - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_TRIGGER | cut -d'/' -f2)
-      - [ -z "$BRANCH_NAME" ] && BRANCH_NAME="dev" # Default por si no viene de webhook
-      - echo "Rama detectada: $BRANCH_NAME"
+      
+      # Extraer el nombre de la rama (ej: refs/heads/dev -> dev)
+      - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///')
+      - [ -z "$BRANCH_NAME" ] && BRANCH_NAME="dev" 
+      - echo "Trabajando en rama: $BRANCH_NAME"
       
       - |
         if [ "$BRANCH_NAME" = "qa" ]; then
-          echo "Ejecutando Pruebas Unitarias (Jest)..."
+          echo "Corriendo validación de lógica (Jest)..."
           npm test || exit 1
         fi
 
   build:
     commands:
-      - echo "Iniciando sesión en ECR para $REPO_NAME..."
+      - echo "Login en ECR para el repositorio $REPO_NAME..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       
       - |
         if [ "$BRANCH_NAME" != "main" ]; then
-          echo "Construyendo imagen: $REPO_URL:$BRANCH_NAME-latest"
+          echo "Construyendo imagen de contenedor..."
           docker build -t $REPO_URL:$BRANCH_NAME-latest .
         else
-          echo "Promoviendo imagen de QA a Producción..."
+          echo "Modo Producción: Promoviendo imagen de QA..."
           docker pull $REPO_URL:qa-latest
           docker tag $REPO_URL:qa-latest $REPO_URL:prod-latest
         fi
@@ -44,10 +45,10 @@ phases:
     commands:
       - |
         if [ "$BRANCH_NAME" != "main" ]; then
-          echo "Subiendo imagen de $BRANCH_NAME a ECR..."
+          echo "Empujando imagen a la bodega (ECR)..."
           docker push $REPO_URL:$BRANCH_NAME-latest
         else
-          echo "Subiendo imagen de PROD a ECR..."
+          echo "Liberando versión de Producción..."
           docker push $REPO_URL:prod-latest
         fi
-      - echo "¡Pipeline completado para la rama $BRANCH_NAME!"
+      - echo "Pipeline finalizado para $BRANCH_NAME"
