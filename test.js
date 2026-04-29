@@ -9,9 +9,9 @@ try {
     assert.strictEqual(sum(1, 2), 3);
     console.log('✅ Prueba 1 superada: 1 + 2 = 3');
 
-    // Prueba 2: -1 + 5 debe ser 9
-    assert.strictEqual(sum(-1, 5), 9);
-    console.log('✅ Prueba 2 superada: -1 + 5 = 9');
+    // Prueba 2: -1 + 5 debe ser 4
+    assert.strictEqual(sum(-1, 5), 4);
+    console.log('✅ Prueba 2 superada: -1 + 5 = 4');
 
     console.log('🚀 ¡TODAS LAS PRUEBAS PASARON!');
     process.exit(0); // Código 0 = Éxito total
