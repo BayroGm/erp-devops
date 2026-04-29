@@ -5,7 +5,7 @@ const sum = require('./sum');
 console.log('--- INICIANDO PRUEBAS UNITARIAS ---');
 
 try {
-    // Prueba 1: 1 + 2 debe ser 3
+    // Prueba 1: 1 + 2 debe ser 3s
     assert.strictEqual(sum(1, 2), 3);
     console.log('✅ Prueba 1 superada: 1 + 2 = 3');
 
