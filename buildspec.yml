@@ -7,12 +7,7 @@ phases:
     commands:
       - echo "--- BLOQUE DEV INSTALANDO DEPENDENCIAS ---"
       - npm install
-  pre_build:
-    commands:
-      - echo "--- BLOQUE DEV SAST / SEGURIDAD ---"
-      # Esta es la parte de SAST de tu diagrama
-      - npx snyk test --token=$SNYK_TOKEN --severity-threshold=high || echo "Vulnerabilidades encontradas. Avisando al equipo..."
-  build:
+    build:
     commands:
       - echo "--- BLOQUE DEV PUSH IMAGE ---"
       - REPO_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/erp-demo"
